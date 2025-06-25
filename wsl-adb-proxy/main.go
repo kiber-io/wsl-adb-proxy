@@ -6,6 +6,7 @@ import (
 	"net"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 const (
@@ -66,6 +67,21 @@ func startProxy() error {
 	if err != nil {
 		return err
 	}
+
+	// Wait until the port on winHost is open
+	addr := net.JoinHostPort(winHost, "5037")
+	fmt.Printf("Waiting for %s to become available...\n", addr)
+	for {
+		conn, err := net.Dial("tcp", addr)
+		if err == nil {
+			conn.Close()
+			break
+		}
+		// Sleep a bit before retrying
+		// (import "time" at the top if not already)
+		time.Sleep(1 * time.Second)
+	}
+
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", WSL_BIND_HOST, WSL_BIND_PORT))
 	if err != nil {
 		return err
